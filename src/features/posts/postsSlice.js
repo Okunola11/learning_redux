@@ -1,31 +1,18 @@
-import { createSlice, nanoid } from "@reduxjs/toolkit";
+import { createSlice, nanoid, createAsyncThunk } from "@reduxjs/toolkit";
 import { sub } from "date-fns";
-const initialState = [
-  {
-    id: "1",
-    title: "Learning Redux Toolkit",
-    content: "I was told it gets better in the long run",
-    date: sub(new Date(), { minutes: 10 }).toISOString(),
-    reactions: {
-      thumbsUp: 0,
-      heart: 0,
-      rocket: 0,
-      coffe: 0,
-    },
-  },
-  {
-    id: "2",
-    title: "Slices...",
-    content: "More motivation equals more progress",
-    date: sub(new Date(), { minutes: 5 }).toISOString(),
-    reactions: {
-      thumbsUp: 0,
-      heart: 0,
-      rocket: 0,
-      coffe: 0,
-    },
-  },
-];
+import axios from "axios";
+const POSTS_URL = "https://jsonplaceholder.typicode.com/posts";
+
+const initialState = {
+  posts: [],
+  status: "idle", //'idle' | 'loading' | 'succeeded' | 'failed'
+  error: null,
+};
+
+export const fetchPosts = createAsyncThunk("posts/fetchPosts", async () => {
+  const response = await axios.get(POSTS_URL);
+  return response.data;
+});
 
 const postsSlice = createSlice({
   name: "posts",
@@ -33,7 +20,7 @@ const postsSlice = createSlice({
   reducers: {
     postAdded: {
       reducer(state, action) {
-        state.push(action.payload);
+        state.posts.push(action.payload);
       },
       prepare(title, content, userId) {
         return {
@@ -55,7 +42,7 @@ const postsSlice = createSlice({
     },
     reactionAdded: (state, action) => {
       const { postId, reaction } = action.payload;
-      const existingPost = state.find((post) => post.id === postId);
+      const existingPost = state.posts.find((post) => post.id === postId);
       if (existingPost) {
         existingPost.reactions[reaction]++;
       }
@@ -63,7 +50,7 @@ const postsSlice = createSlice({
   },
 });
 
-export const selectAllPosts = (state) => state.posts;
+export const selectAllPosts = (state) => state.posts.posts;
 
 export const { postAdded, reactionAdded } = postsSlice.actions;
 
